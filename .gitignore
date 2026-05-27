@@ -1,0 +1,17 @@
+# 認証情報・機密設定
+.env
+
+# ローカルの状態管理・同期された画像データ
+state.json
+.attach/
+
+# Pythonの仮想環境・パッケージキャッシュ
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# 開発環境設定・ドキュメント
+.antigravitycli/
+GEMINI.md
