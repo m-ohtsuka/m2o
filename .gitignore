@@ -1,5 +1,7 @@
 # 認証情報・機密設定
 .env
+mastodon.org
+mastodon.org.bak
 
 # ローカルの状態管理・同期された画像データ
 state.json
