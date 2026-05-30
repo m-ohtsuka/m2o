@@ -7,6 +7,7 @@
 - **差分同期（インクリメンタル同期）**: 同期した最新のToot IDを `state.json` に記録・保持するため、2回目以降は新規の追加投稿のみを高速に差分同期します。
 - **インテリジェントなOrgツリー構造の自動生成・挿入**: 既存のOrgファイルを自動解析し、正しい年月見出し（`** YYYY-MM MM月`）と日付見出し（`*** YYYY-MM-DD 曜日`）の下に、時系列の昇順（古い順）でToot（`**** [YYYY-MM-DD 曜日 HH:MM]`）を自動でソート挿入します。
 - **HTMLからOrg-modeへのクリーンアップ**: Mastodonから取得されるHTML形式の本文をパースし、改行や段落を綺麗に整形します。メンションやハッシュタグ、通常のリンクは自動でOrg-modeのリンク記法（`[[URL][表示テキスト]]`）に変換されます。
+- **柔軟なブースト（reblog）ハンドリング**: ブーストされた他人の投稿をスキップするか、元の投稿者情報とともに引用形式（`#+BEGIN_QUOTE`）で保存するかを選択可能です。
 - **強力な画像アタッチメント連携 (org-attach / org-download仕様)**:
   - 画像を含む投稿の場合、UUID形式の `ID` プロパティを持つ `:PROPERTIES:` セクションを自動で生成し、Toot見出し直下に付与します。
   - 画像ファイルは、Orgファイルと同じ階層の `.attach/XX/XXXX.../` ディレクトリ配下に自動保存します（ファイル名: `toot_{toot_id}_{index}.{ext}`）。
@@ -41,6 +42,7 @@
    - `MASTODON_INSTANCE_URL`: 利用しているMastodonのインスタンスURL（例: `https://mastodon.social`）。
    - `MASTODON_ACCESS_TOKEN`: Mastodonの開発者設定から生成したアクセストークン（`read:statuses` スコープが必要）。
    - `ORG_FILE_PATH`: 出力先となる `.org` ファイルの絶対パス（例: `/Users/username/org/mastodon.org`）。
+   - `BOOST_HANDLING`（任意）: ブースト（reblog）の扱い。`quote`（デフォルト）を指定すると引用として保存し、`skip` を指定すると無視します。
 
 ## 使用方法
 

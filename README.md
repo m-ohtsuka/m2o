@@ -7,6 +7,7 @@
 - **Incremental Sync**: Keeps track of the last synchronized toot ID in `state.json` to fetch only new updates on subsequent runs.
 - **Intelligent Org Tree Insertion**: Automatically parses your existing Org-mode file and inserts toots chronologically (ascending order) under the correct Year-Month (`** YYYY-MM MM月`) and Daily (`*** YYYY-MM-DD Weekday`) headings.
 - **HTML to Org-mode Formatting**: Cleans up Mastodon HTML content into clean Org-mode plain text, converting mentions, hashtags, and links into standard Org links (`[[URL][Text]]`).
+- **Flexible Boost Handling**: Supports skipping boosts entirely or quoting them with original author information and `#+BEGIN_QUOTE` blocks.
 - **Image Attachment Support**:
   - Automatically generates a UUID `:ID:` property inside a `:PROPERTIES:` drawer for toots with images.
   - Downloads images into a structured `.attach/XX/XXXX.../` directory (conforming to `org-attach` guidelines).
@@ -41,6 +42,7 @@
    - `MASTODON_INSTANCE_URL`: Your Mastodon instance URL (e.g., `https://mastodon.social`).
    - `MASTODON_ACCESS_TOKEN`: Access token generated from your Mastodon development settings (requires `read:statuses` scope).
    - `ORG_FILE_PATH`: Absolute path to your destination `.org` file (e.g., `/Users/username/org/mastodon.org`).
+   - `BOOST_HANDLING` (Optional): How to handle boosts (reblogs). Set to `quote` (default) to include boosts as quotes, or `skip` to ignore them.
 
 ## Usage
 

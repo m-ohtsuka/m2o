@@ -94,13 +94,34 @@ def main():
     for toot in all_toots:
         toot_id = str(toot['id'])
         created_at = toot['created_at']
-        html_content = toot['content']
-        media_attachments = toot['media_attachments']
+        
+        # ブースト（reblog）の処理
+        reblog = toot.get('reblog')
+        if reblog:
+            if config.boost_handling == 'skip':
+                print(f"  [{toot_id}] Skipping boost.")
+                # 次の同期の開始点とするためにIDは更新する
+                new_last_id = int(toot['id'])
+                continue
+            
+            # 引用として処理する場合
+            orig_author = reblog.get('account', {})
+            display_name = orig_author.get('display_name') or orig_author.get('username')
+            acct = orig_author.get('acct')
+            orig_url = reblog.get('url')
+            
+            html_content = reblog['content']
+            media_attachments = reblog['media_attachments']
+            
+            # 本文を変換し、引用符で囲む
+            orig_org_content = html_to_org(html_content)
+            org_content = f"Boosted: [[{orig_url}][{display_name} (@{acct})]]\n\n#+BEGIN_QUOTE\n{orig_org_content}\n#+END_QUOTE"
+        else:
+            html_content = toot['content']
+            media_attachments = toot['media_attachments']
+            org_content = html_to_org(html_content)
 
-        # HTML 本文を Org 記法に変換
-        org_content = html_to_org(html_content)
-
-        print(f"  [{toot_id}] Processing toot from {created_at.astimezone().strftime('%Y-%m-%d %H:%M:%S')}...")
+        print(f"  [{toot_id}] Processing {'boost' if reblog else 'toot'} from {created_at.astimezone().strftime('%Y-%m-%d %H:%M:%S')}...")
 
         # Orgファイルへ追加＆画像処理
         writer.add_toot(

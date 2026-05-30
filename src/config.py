@@ -15,6 +15,7 @@ class Config:
         self.instance_url = os.getenv("MASTODON_INSTANCE_URL")
         self.access_token = os.getenv("MASTODON_ACCESS_TOKEN")
         self.org_file_path = os.getenv("ORG_FILE_PATH")
+        self.boost_handling = os.getenv("BOOST_HANDLING", "quote").lower()
 
         if not self.instance_url:
             raise ValueError("MASTODON_INSTANCE_URL is not set in .env")
