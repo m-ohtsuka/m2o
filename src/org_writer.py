@@ -9,7 +9,7 @@ WEEKDAYS_SHORT = ["月", "火", "水", "木", "金", "土", "日"]
 
 class OrgNode:
     def __init__(self, level, title, content_lines=None):
-        self.level = level  # 1, 2 (月), 3 (日), 4 (Toot) などの見出しレベル
+        self.level = level  # 1 (年), 2 (月), 3 (日), 4 (Toot) などの見出しレベル
         self.title = title  # 見出し行そのもの（星を含む）
         self.content_lines = content_lines or []  # この見出しの直下にあるコンテンツ行
         self.children = []  # サブノードのリスト
@@ -56,11 +56,15 @@ def serialize_org(node):
 def get_node_sort_key(node):
     """
     ノードのソート用キーを抽出する。
+    - * YYYY -> YYYY
     - ** YYYY-MM -> YYYY-MM
     - *** YYYY-MM-DD -> YYYY-MM-DD
     - **** [YYYY-MM-DD 曜日 HH:MM] -> YYYY-MM-DD HH:MM
     """
-    if node.level == 2:
+    if node.level == 1:
+        m = re.search(r'\* (\d{4})', node.title)
+        return m.group(1) if m else node.title
+    elif node.level == 2:
         m = re.search(r'\*\* (\d{4}-\d{2})', node.title)
         return m.group(1) if m else node.title
     elif node.level == 3:
@@ -92,7 +96,7 @@ class OrgWriter:
         """
         単一のTootをOrgファイルに追加する。
         - 既存Orgファイルをロードしパース
-        - 適切な年月見出し、日付見出しを探す（なければ作成）
+        - 適切な年見出し・年月見出し・日付見出しを探す（なければ作成）
         - 画像がある場合はUUIDを生成し、:PROPERTIES:セクションを付与し画像をダウンロード保存
         - 時系列昇順で正しい位置に見出しを追加
         - ファイルに再保存
@@ -108,6 +112,7 @@ class OrgWriter:
 
         # タイムゾーン考慮の上でローカル時刻に変換
         local_dt = created_at.astimezone()
+        year_str = local_dt.strftime('%Y')
         year_month = local_dt.strftime('%Y-%m')
         month_num = local_dt.month
         date_str = local_dt.strftime('%Y-%m-%d')
@@ -116,9 +121,21 @@ class OrgWriter:
         weekday_short = WEEKDAYS_SHORT[wd_idx]
         time_str = local_dt.strftime('%H:%M')
 
+        # 0. 年見出しの取得・作成
+        year_node = None
+        for child in root.children:
+            if child.level == 1:
+                m = re.search(r'\* (\d{4})$', child.title)
+                if m and m.group(1) == year_str:
+                    year_node = child
+                    break
+        if not year_node:
+            year_node = OrgNode(1, f"* {year_str}")
+            insert_sorted(root, year_node)
+
         # 1. 月見出しの取得・作成
         month_node = None
-        for child in root.children:
+        for child in year_node.children:
             if child.level == 2:
                 m = re.search(r'\*\* (\d{4}-\d{2})', child.title)
                 if m and m.group(1) == year_month:
@@ -126,7 +143,7 @@ class OrgWriter:
                     break
         if not month_node:
             month_node = OrgNode(2, f"** {year_month} {month_num}月")
-            insert_sorted(root, month_node)
+            insert_sorted(year_node, month_node)
 
         # 2. 日見出しの取得・作成
         day_node = None

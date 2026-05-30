@@ -4,6 +4,7 @@ from src.org_writer import OrgWriter, parse_org, serialize_org
 
 def test_org_parsing_and_serialization():
     org_lines = [
+        "* 2026\n",
         "** 2026-05 5月\n",
         "*** 2026-05-02 土曜日\n",
         "**** [2026-05-02 土 17:04]\n",
@@ -12,9 +13,14 @@ def test_org_parsing_and_serialization():
     ]
     root = parse_org(org_lines)
     assert len(root.children) == 1
-    assert root.children[0].level == 2
-    assert root.children[0].children[0].level == 3
-    assert root.children[0].children[0].children[0].level == 4
+    year_node = root.children[0]
+    assert year_node.level == 1
+    month_node = year_node.children[0]
+    assert month_node.level == 2
+    day_node = month_node.children[0]
+    assert day_node.level == 3
+    toot_node = day_node.children[0]
+    assert toot_node.level == 4
 
     serialized = serialize_org(root)
     assert serialized == org_lines
@@ -33,6 +39,7 @@ def test_org_writer_add_toot(tmp_path):
     
     assert org_file.exists()
     content = org_file.read_text(encoding='utf-8')
+    assert "* 2026" in content
     assert "** 2026-05 5月" in content
     assert "*** 2026-05-02 土曜日" in content
     assert "**** [2026-05-02 土 17:04]" in content
@@ -71,6 +78,9 @@ def test_org_writer_different_months(tmp_path):
     
     content = org_file.read_text(encoding='utf-8')
     
+    # 年見出しが存在すること
+    assert "* 2026" in content
+
     # 4月の見出しが5月の見出しより上に位置しているか確認
     lines = content.splitlines()
     idx_apr = -1
@@ -84,6 +94,39 @@ def test_org_writer_different_months(tmp_path):
     assert idx_apr != -1
     assert idx_may != -1
     assert idx_apr < idx_may
+
+def test_org_writer_cross_years(tmp_path):
+    """異なる年の投稿が、それぞれ別の年見出しの下に正しく配置されることを確認する。"""
+    org_file = tmp_path / "test.org"
+    attach_dir = tmp_path / ".attach"
+
+    writer = OrgWriter(org_file, attach_dir)
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+
+    dt_2025 = datetime.datetime(2025, 12, 31, 23, 59, tzinfo=tz_jst)
+    dt_2026 = datetime.datetime(2026, 1, 1, 0, 1, tzinfo=tz_jst)
+
+    writer.add_toot("1", dt_2025, "2025 content", [])
+    writer.add_toot("2", dt_2026, "2026 content", [])
+
+    content = org_file.read_text(encoding='utf-8')
+    lines = content.splitlines()
+
+    assert "* 2025" in content
+    assert "* 2026" in content
+    assert "** 2025-12 12月" in content
+    assert "** 2026-01 1月" in content
+
+    # 年見出しが昇順になっていること
+    idx_2025 = next(i for i, l in enumerate(lines) if l == "* 2025")
+    idx_2026 = next(i for i, l in enumerate(lines) if l == "* 2026")
+    assert idx_2025 < idx_2026
+
+    # 各月見出しが正しい年見出し配下にあること
+    idx_dec = next(i for i, l in enumerate(lines) if "** 2025-12 12月" in l)
+    idx_jan = next(i for i, l in enumerate(lines) if "** 2026-01 1月" in l)
+    assert idx_2025 < idx_dec < idx_2026
+    assert idx_2026 < idx_jan
 
 def test_org_writer_add_toot_with_images(tmp_path):
     from unittest.mock import MagicMock, patch
@@ -116,6 +159,7 @@ def test_org_writer_add_toot_with_images(tmp_path):
         
     assert org_file.exists()
     content = org_file.read_text(encoding='utf-8')
+    assert "* 2026" in content
     assert ":PROPERTIES:" in content
     assert ":ID:" in content
     assert "[[attachment:toot_11113_1.jpg]]" in content
@@ -128,4 +172,5 @@ def test_org_writer_add_toot_with_images(tmp_path):
     img_path = attach_dir / entry_id[:2] / entry_id[2:] / "toot_11113_1.jpg"
     assert img_path.exists()
     assert img_path.read_bytes() == b"fake_image_data"
+
 
