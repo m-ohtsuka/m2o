@@ -70,7 +70,7 @@ def main():
 
         # 降順で返るため、最後尾の要素が最も古い
         last_id = toots[-1]['id']
-        max_id = last_id - 1  # 次回取得用にmax_idを更新
+        max_id = int(last_id) - 1  # 次回取得用にmax_idを更新
 
         # 取得件数が limit 未満であれば、もう since_id までの間に新しい投稿はない
         if len(toots) < limit:
@@ -110,7 +110,7 @@ def main():
             media_attachments=media_attachments
         )
         
-        new_last_id = toot['id']
+        new_last_id = int(toot['id'])
         synced_count += 1
 
     # 7. 状態の更新と保存

@@ -112,7 +112,7 @@ def test_org_writer_add_toot_with_images(tmp_path):
     with patch('requests.get', return_value=mock_response) as mock_get:
         writer.add_toot("11113", dt, "Toot with image content", media_attachments)
         
-        mock_get.assert_called_once_with('https://example.com/media/test_image.jpg', stream=True, timeout=20)
+        mock_get.assert_called_once_with('https://example.com/media/test_image.jpg', headers={'User-Agent': 'm2o-sync-bot/1.0'}, stream=True, timeout=20)
         
     assert org_file.exists()
     content = org_file.read_text(encoding='utf-8')
