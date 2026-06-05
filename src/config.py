@@ -3,6 +3,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 class Config:
+    instance_url: str
+    access_token: str
+    org_file_path: Path
+    attach_dir: Path
+    boost_handling: str
+
     def __init__(self):
         # .env ファイルをロード
         # カレントディレクトリ、またはスクリプトの親ディレクトリから探す
@@ -12,20 +18,20 @@ class Config:
         
         load_dotenv(dotenv_path=env_path)
 
-        self.instance_url = os.getenv("MASTODON_INSTANCE_URL")
-        self.access_token = os.getenv("MASTODON_ACCESS_TOKEN")
-        self.org_file_path = os.getenv("ORG_FILE_PATH")
-        self.boost_handling = os.getenv("BOOST_HANDLING", "quote").lower()
+        instance_url = os.getenv("MASTODON_INSTANCE_URL")
+        access_token = os.getenv("MASTODON_ACCESS_TOKEN")
+        org_file_path_str = os.getenv("ORG_FILE_PATH")
+        boost_handling = os.getenv("BOOST_HANDLING", "quote").lower()
 
-        if not self.instance_url:
+        if not instance_url:
             raise ValueError("MASTODON_INSTANCE_URL is not set in .env")
-        if not self.access_token:
+        if not access_token:
             raise ValueError("MASTODON_ACCESS_TOKEN is not set in .env")
-        if not self.org_file_path:
+        if not org_file_path_str:
             raise ValueError("ORG_FILE_PATH is not set in .env")
 
-        # パスを絶対パスに解決
-        self.org_file_path = Path(self.org_file_path).resolve()
-        
-        # 画像保存用の .attach ディレクトリパス（Orgファイルと同じディレクトリ直下）
+        self.instance_url = instance_url
+        self.access_token = access_token
+        self.org_file_path = Path(org_file_path_str).resolve()
         self.attach_dir = self.org_file_path.parent / ".attach"
+        self.boost_handling = boost_handling
