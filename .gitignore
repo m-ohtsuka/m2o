@@ -16,4 +16,7 @@ __pycache__/
 
 # 開発環境設定・ドキュメント
 .antigravitycli/
+.claude/
+.specify/
 GEMINI.md
+CLAUDE.md
