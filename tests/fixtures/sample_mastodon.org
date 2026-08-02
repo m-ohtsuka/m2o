@@ -1,0 +1,28 @@
+* 2025
+** 2025-12 12月
+*** 2025-12-31 水曜日
+**** [2025-12-31 水 23:59]
+Last toot of 2025.
+
+* 2026
+** 2026-01 1月
+*** 2026-01-05 月曜日
+**** [2026-01-05 月 09:00]
+Hello from January.
+
+**** [2026-01-05 月 21:15]
+:PROPERTIES:
+:ID:       aabbccdd-1111-2222-3333-444455556666
+:END:
+[[attachment:toot_1001_1.jpg]]
+Photo toot in January.
+
+** 2026-02 2月
+*** 2026-02-10 火曜日
+**** [2026-02-10 火 08:30]
+Boosted: [[https://example.com/orig/50][Other User (@otheruser@example.com)]]
+
+#+BEGIN_QUOTE
+Original boosted content in February.
+#+END_QUOTE
+

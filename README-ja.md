@@ -41,8 +41,10 @@
    `.env` ファイルを開き、以下の各項目を設定してください。
    - `MASTODON_INSTANCE_URL`: 利用しているMastodonのインスタンスURL（例: `https://mastodon.social`）。
    - `MASTODON_ACCESS_TOKEN`: Mastodonの開発者設定から生成したアクセストークン（`read:statuses` スコープが必要）。
-   - `ORG_FILE_PATH`: 出力先となる `.org` ファイルの絶対パス（例: `/Users/username/org/mastodon.org`）。
+   - `ORG_FILE_PATH`: 出力先となる `.org` ファイルの絶対パス（例: `/Users/username/org/mastodon.org`）。`ORG_LAYOUT=monthly` の場合は不要です。
    - `BOOST_HANDLING`（任意）: ブースト（reblog）の扱い。`quote`（デフォルト）を指定すると引用として保存し、`skip` を指定すると無視します。
+   - `ORG_LAYOUT`（任意）: `single`（デフォルト）は従来通り `ORG_FILE_PATH` へ単一ファイルとして保存します。`monthly` を指定すると年ディレクトリ・月ファイルに分割保存します（後述）。
+   - `ORG_DIRECTORY`: `ORG_LAYOUT=monthly` のとき必須。月別ファイルを生成するベースディレクトリ。
 
 ## 使用方法
 
@@ -58,6 +60,36 @@
 ```cron
 0 * * * * cd /path/to/m2o && .venv/bin/python m2o.py >/dev/null 2>&1
 ```
+
+### 月別Orgファイルレイアウト（任意）
+
+肥大化し続ける単一の `mastodon.org` の代わりに、年ディレクトリ・月ファイルへ分割保存
+することもできます。`.env` に以下を設定してください。
+
+```env
+ORG_LAYOUT=monthly
+ORG_DIRECTORY=/absolute/path/to/your/org
+```
+
+これにより、tootは `ORG_DIRECTORY/mastodon/YYYY/MM.org`（例:
+`ORG_DIRECTORY/mastodon/2026/08.org`）に保存され、添付ファイルは
+`ORG_DIRECTORY/mastodon/YYYY/.attach/` 配下に保存されます。各月別ファイルは、単一ファイル
+レイアウトと同じ見出し階層（`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` →
+`**** [YYYY-MM-DD 曜 HH:MM]`）を維持します。
+
+#### 既存の `mastodon.org` を変換する
+
+既に単一の `mastodon.org` を運用している場合は、以下のコマンドで月別レイアウトへ
+一括変換できます。
+
+```bash
+.venv/bin/python convert_to_monthly.py /path/to/mastodon.org /absolute/path/to/your/org
+```
+
+この変換は非破壊的です。変換元の `mastodon.org` と `.attach` 配下のファイルは変更されず、
+添付ファイルは新しい場所へ**コピー**されます。また、変換先に既に存在する月はスキップされ
+（上書きされません）、実行結果としてスキップした月の一覧が表示されるので確認できます。
+`migrate_org.py` と同様、一度だけ手動で実行する移行スクリプトです。
 
 ## テストの実行
 

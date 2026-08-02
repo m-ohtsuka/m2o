@@ -4,7 +4,7 @@ from pathlib import Path
 from src.config import Config
 from src.mastodon_client import MastodonClient
 from src.org_formatter import html_to_org
-from src.org_writer import OrgWriter
+from src.org_writer import OrgWriter, monthly_paths
 
 STATE_FILE = Path("state.json")
 
@@ -85,8 +85,10 @@ def main():
     all_toots.sort(key=lambda t: t['id'])
 
     # 6. Orgファイルへの書き込みと画像ダウンロード
-    print(f"Writing to org file: {config.org_file_path}")
-    writer = OrgWriter(config.org_file_path, config.attach_dir)
+    if config.org_layout == "monthly":
+        print(f"Writing to monthly org layout under: {config.org_directory}")
+    else:
+        print(f"Writing to org file: {config.org_file_path}")
 
     synced_count = 0
     new_last_id = last_sync_toot_id
@@ -123,7 +125,14 @@ def main():
 
         print(f"  [{toot_id}] Processing {'boost' if reblog else 'toot'} from {created_at.astimezone().strftime('%Y-%m-%d %H:%M:%S')}...")
 
+        # レイアウトモードに応じた出力先の解決
+        if config.org_layout == "monthly":
+            org_path, attach_dir = monthly_paths(config.org_directory, created_at.astimezone())
+        else:
+            org_path, attach_dir = config.org_file_path, config.attach_dir
+
         # Orgファイルへ追加＆画像処理
+        writer = OrgWriter(org_path, attach_dir)
         writer.add_toot(
             toot_id=toot_id,
             created_at=created_at,

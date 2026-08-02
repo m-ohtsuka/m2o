@@ -41,8 +41,10 @@
    Open `.env` and configure:
    - `MASTODON_INSTANCE_URL`: Your Mastodon instance URL (e.g., `https://mastodon.social`).
    - `MASTODON_ACCESS_TOKEN`: Access token generated from your Mastodon development settings (requires `read:statuses` scope).
-   - `ORG_FILE_PATH`: Absolute path to your destination `.org` file (e.g., `/Users/username/org/mastodon.org`).
+   - `ORG_FILE_PATH`: Absolute path to your destination `.org` file (e.g., `/Users/username/org/mastodon.org`). Required unless `ORG_LAYOUT=monthly`.
    - `BOOST_HANDLING` (Optional): How to handle boosts (reblogs). Set to `quote` (default) to include boosts as quotes, or `skip` to ignore them.
+   - `ORG_LAYOUT` (Optional): `single` (default) writes everything to `ORG_FILE_PATH`. `monthly` splits toots into one file per year/month instead (see below).
+   - `ORG_DIRECTORY`: Required when `ORG_LAYOUT=monthly`. The base directory under which monthly files are created.
 
 ## Usage
 
@@ -58,6 +60,35 @@ You can schedule the script to run periodically using `cron`. For example, to sy
 ```cron
 0 * * * * cd /path/to/m2o && .venv/bin/python m2o.py >/dev/null 2>&1
 ```
+
+### Monthly Org Layout (Optional)
+
+Instead of one ever-growing `mastodon.org`, you can split toots into one file per
+year/month by setting in `.env`:
+
+```env
+ORG_LAYOUT=monthly
+ORG_DIRECTORY=/absolute/path/to/your/org
+```
+
+This writes toots to `ORG_DIRECTORY/mastodon/YYYY/MM.org` (e.g.
+`ORG_DIRECTORY/mastodon/2026/08.org`), with attachments under
+`ORG_DIRECTORY/mastodon/YYYY/.attach/`. Each monthly file keeps the same heading
+hierarchy (`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` → `**** [YYYY-MM-DD Weekday HH:MM]`)
+as the single-file layout.
+
+#### Converting an existing `mastodon.org`
+
+If you already have a single `mastodon.org`, convert it to the monthly layout with:
+
+```bash
+.venv/bin/python convert_to_monthly.py /path/to/mastodon.org /absolute/path/to/your/org
+```
+
+This is non-destructive: the source `mastodon.org` and its `.attach` files are never
+modified, attachments are **copied** into the new layout, and any month that already
+exists at the destination is skipped (not overwritten) and listed in the output so you
+can review it. Run it once as a manual migration step, similar to `migrate_org.py`.
 
 ## Testing
 

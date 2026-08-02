@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import uuid
@@ -74,6 +75,20 @@ def get_node_sort_key(node):
         m = re.search(r'\[(\d{4}-\d{2}-\d{2})\s+\w+\s+(\d{2}:\d{2})\]', node.title)
         return f"{m.group(1)} {m.group(2)}" if m else node.title
     return node.title
+
+def monthly_paths(org_directory: Path, local_dt: datetime.datetime) -> tuple[Path, Path]:
+    """
+    月別レイアウトにおける、tootのローカル日時に対応する出力先パスを算出する。
+    - Orgファイル: org_directory/mastodon/{YYYY}/{MM}.org
+    - 添付ファイルディレクトリ: org_directory/mastodon/{YYYY}/.attach
+    """
+    org_directory = Path(org_directory)
+    year_str = local_dt.strftime('%Y')
+    month_str = local_dt.strftime('%m')
+    year_dir = org_directory / "mastodon" / year_str
+    org_path = year_dir / f"{month_str}.org"
+    attach_dir = year_dir / ".attach"
+    return org_path, attach_dir
 
 def insert_sorted(parent_node, new_node):
     """

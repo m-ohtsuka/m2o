@@ -10,6 +10,8 @@ def test_boost_handling_skip(tmp_path, monkeypatch):
     monkeypatch.delenv("MASTODON_INSTANCE_URL", raising=False)
     monkeypatch.delenv("MASTODON_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("ORG_FILE_PATH", raising=False)
+    monkeypatch.delenv("ORG_LAYOUT", raising=False)
+    monkeypatch.delenv("ORG_DIRECTORY", raising=False)
 
     # Setup temporary files
     org_file = tmp_path / "test.org"
@@ -85,6 +87,8 @@ def test_boost_handling_quote(tmp_path, monkeypatch):
     monkeypatch.delenv("MASTODON_INSTANCE_URL", raising=False)
     monkeypatch.delenv("MASTODON_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("ORG_FILE_PATH", raising=False)
+    monkeypatch.delenv("ORG_LAYOUT", raising=False)
+    monkeypatch.delenv("ORG_DIRECTORY", raising=False)
 
     # Setup temporary files
     org_file = tmp_path / "test.org"

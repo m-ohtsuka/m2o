@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from src.org_writer import OrgWriter, parse_org, serialize_org
+from src.org_writer import OrgWriter, parse_org, serialize_org, monthly_paths
 
 def test_org_parsing_and_serialization():
     org_lines = [
@@ -172,5 +172,41 @@ def test_org_writer_add_toot_with_images(tmp_path):
     img_path = attach_dir / entry_id[:2] / entry_id[2:] / "toot_11113_1.jpg"
     assert img_path.exists()
     assert img_path.read_bytes() == b"fake_image_data"
+
+
+def test_monthly_paths(tmp_path):
+    org_directory = tmp_path / "org"
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+
+    dt = datetime.datetime(2026, 8, 2, 17, 4, tzinfo=tz_jst)
+    org_path, attach_dir = monthly_paths(org_directory, dt)
+    assert org_path == org_directory / "mastodon" / "2026" / "08.org"
+    assert attach_dir == org_directory / "mastodon" / "2026" / ".attach"
+
+
+def test_monthly_paths_pads_single_digit_month(tmp_path):
+    org_directory = tmp_path / "org"
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+
+    dt = datetime.datetime(2026, 1, 5, 9, 0, tzinfo=tz_jst)
+    org_path, attach_dir = monthly_paths(org_directory, dt)
+    assert org_path == org_directory / "mastodon" / "2026" / "01.org"
+    assert attach_dir == org_directory / "mastodon" / "2026" / ".attach"
+
+
+def test_monthly_paths_different_years(tmp_path):
+    org_directory = tmp_path / "org"
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+
+    dt_2025 = datetime.datetime(2025, 12, 31, 23, 59, tzinfo=tz_jst)
+    dt_2026 = datetime.datetime(2026, 1, 1, 0, 1, tzinfo=tz_jst)
+
+    org_path_2025, attach_dir_2025 = monthly_paths(org_directory, dt_2025)
+    org_path_2026, attach_dir_2026 = monthly_paths(org_directory, dt_2026)
+
+    assert org_path_2025 == org_directory / "mastodon" / "2025" / "12.org"
+    assert org_path_2026 == org_directory / "mastodon" / "2026" / "01.org"
+    assert attach_dir_2025 == org_directory / "mastodon" / "2025" / ".attach"
+    assert attach_dir_2026 == org_directory / "mastodon" / "2026" / ".attach"
 
 
