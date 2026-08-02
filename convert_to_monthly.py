@@ -12,7 +12,10 @@ convert_to_monthly.py: 既存の単一 mastodon.org を月別レイアウトへ�
   **** [YYYY-MM-DD 曜 HH:MM]
 
 変換先: <Org Directory>/mastodon/YYYY/MM.org （各ファイルは同じ4階層をそのまま維持する）
-添付ファイルは <Org Directory>/mastodon/YYYY/.attach/ へコピーする（元は変更・削除しない）。
+添付ファイルは <Org Directory>/mastodon/YYYY/images/ へフラット（ID分割なし）でコピーする
+（元の .attach/{id[:2]}/{id[2:]}/ 配下のファイルは変更・削除しない）。生成される各月ファイルの
+先頭には `#+PROPERTY: ATTACH_DIR images/` を挿入し、EmacsのグローバルなORG_ATTACH_ID_DIR設定に
+依存せずインライン画像が解決できるようにする。
 """
 import datetime
 import re
@@ -35,6 +38,11 @@ def _extract_toot_entry_id(day_node: OrgNode) -> str | None:
 def _copy_attachments_for_toot(
     toot_node: OrgNode, source_attach_dir: Path, dest_attach_dir: Path
 ) -> list[tuple[Path, Path]]:
+    """
+    変換元（ID分割ディレクトリ .attach/{id[:2]}/{id[2:]}/）から、変換先の
+    images/ 直下へフラットにコピーする（変換先は ATTACH_DIR プロパティを使うため
+    ID分割不要）。
+    """
     entry_id = _extract_toot_entry_id(toot_node)
     if not entry_id:
         return []
@@ -51,7 +59,7 @@ def _copy_attachments_for_toot(
         if not src_path.exists():
             print(f"Warning: attachment not found, skipping copy: {src_path}", file=sys.stderr)
             continue
-        dest_path = dest_attach_dir / id_prefix / id_suffix / filename
+        dest_path = dest_attach_dir / filename
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src_path, dest_path)
         copied.append((src_path, dest_path))
@@ -96,6 +104,7 @@ def convert(source_org_path: Path, org_directory: Path) -> None:
 
             # 年ノード1つ・月ノード1つだけを含む新しいツリーを組み立てる
             new_root = OrgNode(0, "ROOT")
+            new_root.content_lines = ["#+PROPERTY: ATTACH_DIR images/\n"]
             new_year_node = OrgNode(1, year_node.title)
             new_year_node.children.append(month_node)
             new_root.children.append(new_year_node)

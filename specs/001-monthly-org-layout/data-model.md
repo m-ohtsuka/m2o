@@ -32,11 +32,14 @@ tootの保存先形式を表す設定値。`src/config.py` の `Config` に追�
 | `year` | `str`（4桁） | tootのローカル日時の年 |
 | `month` | `str`（2桁, 0埋め） | tootのローカル日時の月 |
 | `org_path` | `Path` | `ORG_DIRECTORY/mastodon/{year}/{month}.org` |
-| `attach_dir` | `Path` | `ORG_DIRECTORY/mastodon/{year}/.attach` |
+| `attach_dir` | `Path` | `ORG_DIRECTORY/mastodon/{year}/images`（ID分割なしのフラット構成） |
 
 **関係**: 内部のOrgツリー構造は既存の単一ファイルレイアウトと同一
 （`OrgNode` level 1=年, 2=月, 3=日, 4=toot）。1つの `MonthlyOrgFile` は常に
-level-1ノードを1つ・その下にlevel-2ノードを1つだけ持つ（FR-010）。
+level-1ノードを1つ・その下にlevel-2ノードを1つだけ持つ（FR-010）。ファイル先頭には
+`#+PROPERTY: ATTACH_DIR images/` が自動挿入される（FR-009）。単一ファイルレイアウトの
+`.attach/{id[:2]}/{id[2:]}/` 構成・`ATTACH_DIR`プロパティなしの挙動はこの機能の対象外で、
+変更されない。
 
 **ライフサイクル**: 対象月の最初のtoot同期時に新規作成（ディレクトリ含む）。以後のtoot
 同期では既存ファイルをパースし、時系列順の位置に追記して上書き保存する

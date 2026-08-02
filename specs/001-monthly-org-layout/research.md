@@ -25,12 +25,14 @@ spec.mdの `Assumptions` で「Plan フェーズで決定する」とされて�
 
 ## 2. 月別ファイルへの書き込み方式
 
-**Decision**: `src/org_writer.py` の `OrgWriter` / `parse_org` / `serialize_org` /
-`insert_sorted` はロジックを一切変更しない。`m2o.py` 側で、tootごとに
-`created_at` のローカル年月から出力先パス（`ORG_LAYOUT=monthly` の場合は
+**Decision**: `src/org_writer.py` の `parse_org` / `serialize_org` / `insert_sorted` は
+ロジックを一切変更しない。`OrgWriter` には後日（実機検証後、§6参照）任意引数
+`attach_property_dir` を追加した。`m2o.py` 側で、tootごとに `created_at` の
+ローカル年月から出力先パス（`ORG_LAYOUT=monthly` の場合は
 `ORG_DIRECTORY/mastodon/{year}/{month:02d}.org`、`attach_dir` は
-`ORG_DIRECTORY/mastodon/{year}/.attach`）を都度計算し、その都度
-`OrgWriter(target_path, target_attach_dir)` を生成して `add_toot()` を呼び出す。
+`ORG_DIRECTORY/mastodon/{year}/images`）を都度計算し、その都度
+`OrgWriter(target_path, target_attach_dir, attach_property_dir="images/")` を生成して
+`add_toot()` を呼び出す。
 
 **Rationale**: FR-010（月別ファイル内でも年→月→日→tootの4階層をそのまま維持する）を
 選択したことで、月別ファイルは「年ノードが1つ・その下に月ノードが1つだけ存在する
@@ -78,8 +80,8 @@ spec.mdの `Assumptions` で「Plan フェーズで決定する」とされて�
 3. 各月のコンテンツ行から `[[attachment:filename]]` リンクと、同じtoot見出し直下の
    `:PROPERTIES: :ID: ...` を突き合わせて元の添付ファイルパス
    （`<変換元.attachディレクトリ>/{id[:2]}/{id[2:]}/{filename}`）を特定し、
-   `ORG_DIRECTORY/mastodon/{YYYY}/.attach/{id[:2]}/{id[2:]}/{filename}` へコピーする
-   （元ファイルは変更しない = FR-011）。
+   `ORG_DIRECTORY/mastodon/{YYYY}/images/{filename}`（ID分割なしのフラット構成）へ
+   コピーする（元ファイルは変更しない = FR-011。詳細は§6参照）。
 4. 実行完了後、スキップした月の一覧（FR-006）とコピーした添付ファイルの
    変換元・変換先パスの一覧（FR-012）を標準出力に表示する。
 
@@ -111,3 +113,35 @@ spec.mdの `Assumptions` で「Plan フェーズで決定する」とされて�
 
 **Rationale**: constitution原則II「テストによる回帰防止」により、Orgファイル構造や
 コンバーターの変更には対応するテストが必須。
+
+## 6. Emacs実機検証で判明した添付ディレクトリの解決方式（実装後の修正）
+
+**Decision**: 当初FR-009で決めた「`.attach/{id[:2]}/{id[2:]}/` のID分割ディレクトリ構成」
+から、「`images/` 直下へのID分割なしのフラット構成 ＋ 各月別ファイル先頭への
+`#+PROPERTY: ATTACH_DIR images/` 自動挿入」に変更した。この変更は**月別レイアウトのみ**
+が対象で、単一ファイルモードの保存形式（`.attach/`のID分割構成、`attachment:`リンク、
+`ATTACH_DIR`プロパティなし）は一切変更しない。
+
+**Rationale**: 実機（Doom Emacs）検証の結果、`[[attachment:filename]]` リンクの
+インライン画像表示は、Emacsのグローバル変数 `org-attach-id-dir`
+（Doomの `+org` モジュールは既定で `org-directory` 直下の `.attach/` に固定する）に
+依存して解決されることが判明した。単一ファイルモードでは `ORG_FILE_PATH` の親
+ディレクトリがこの値とたまたま一致していたため問題が表面化しなかったが、月別
+レイアウトでは `mastodon/{YYYY}/` という追加の階層があるため一致せず、画像が
+表示できなかった。
+
+Orgの `ATTACH_DIR` プロパティを明示すればグローバル設定に依存せず解決できることを
+確認したが、`ATTACH_DIR` が明示されている場合、Emacsは `{ATTACH_DIR}/{filename}`
+という**ID分割なしのフラットパス**を期待することも判明した。既存のID分割構成
+（`.attach/{id[:2]}/{id[2:]}/`）とは非互換であり、単一ファイルモードに既に保存済みの
+画像添付（もしあれば）が壊れるリスクがあるため、単一ファイルモードでは採用しない。
+月別レイアウトは新規機能でまだ既存データがないため、影響なく採用できる。
+
+**Alternatives considered**:
+- `[[file:相対パス]]` リンクへの変更（`attachment:`をやめる）→ 実機で動作確認済みだが、
+  ユーザーの意向により不採用。`ATTACH_DIR` プロパティ方式の方が `org-attach-open` 等の
+  org-attach管理コマンドとの互換性を保てるため。
+- 単一ファイルモードにも同じ修正を適用する案 → 既存データ破壊のリスクがあるため、
+  ユーザーの判断で月別レイアウトのみに限定。
+- 各年ディレクトリに `.dir-locals.el` を自動生成し `org-attach-id-dir` を上書きする案 →
+  実装が複雑になり、Emacsのグローバル設定を部分的に上書きする形になるため不採用。

@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from m2o import main
 
 
@@ -117,3 +117,52 @@ def test_monthly_layout_crosses_month_boundary(tmp_path, monkeypatch):
     assert "September toot" not in aug_content
     assert "September toot" in sep_content
     assert "August toot" not in sep_content
+
+
+def test_monthly_layout_image_toot_uses_attach_dir_property_and_flat_storage(tmp_path, monkeypatch):
+    """monthlyレイアウトでの画像添付tootは、ATTACH_DIRプロパティ付きでimages/へ
+    フラットに保存される（org-attach-id-dirのグローバル設定に依存しないため）。"""
+    _clean_env(monkeypatch)
+    org_directory = tmp_path / "org"
+    _write_env(tmp_path, org_directory)
+    monkeypatch.chdir(tmp_path)
+
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime(2026, 8, 2, 17, 4, tzinfo=tz_jst)
+
+    toot = {
+        'id': 100,
+        'created_at': dt,
+        'content': '<p>Photo toot</p>',
+        'media_attachments': [
+            {
+                'type': 'image',
+                'url': 'https://example.com/media/test_image.jpg',
+                'remote_url': 'https://example.com/media/test_image.jpg',
+            }
+        ],
+        'reblog': None,
+    }
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.iter_content = lambda chunk_size: [b"fake_image_data"]
+
+    with patch('m2o.MastodonClient') as MockClient, \
+            patch('requests.get', return_value=mock_response):
+        mock_instance = MockClient.return_value
+        mock_instance.fetch_toots.side_effect = [[toot], []]
+        main()
+
+    org_path = org_directory / "mastodon" / "2026" / "08.org"
+    content = org_path.read_text(encoding='utf-8')
+
+    assert content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
+    assert ":PROPERTIES:" in content
+    assert ":ID:" in content
+    assert "[[attachment:toot_100_1.jpg]]" in content
+
+    # ID分割なしで images/ 直下にフラット保存されている
+    img_path = org_directory / "mastodon" / "2026" / "images" / "toot_100_1.jpg"
+    assert img_path.exists()
+    assert img_path.read_bytes() == b"fake_image_data"

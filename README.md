@@ -73,9 +73,11 @@ ORG_DIRECTORY=/absolute/path/to/your/org
 
 This writes toots to `ORG_DIRECTORY/mastodon/YYYY/MM.org` (e.g.
 `ORG_DIRECTORY/mastodon/2026/08.org`), with attachments under
-`ORG_DIRECTORY/mastodon/YYYY/.attach/`. Each monthly file keeps the same heading
-hierarchy (`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` → `**** [YYYY-MM-DD Weekday HH:MM]`)
-as the single-file layout.
+`ORG_DIRECTORY/mastodon/YYYY/images/` (flat, no subdirectories). Each monthly file keeps
+the same heading hierarchy (`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` →
+`**** [YYYY-MM-DD Weekday HH:MM]`) as the single-file layout, and starts with
+`#+PROPERTY: ATTACH_DIR images/` so Emacs resolves attachments relative to the file
+itself, regardless of your global `org-attach-id-dir` setting.
 
 #### Converting an existing `mastodon.org`
 
@@ -86,9 +88,10 @@ If you already have a single `mastodon.org`, convert it to the monthly layout wi
 ```
 
 This is non-destructive: the source `mastodon.org` and its `.attach` files are never
-modified, attachments are **copied** into the new layout, and any month that already
-exists at the destination is skipped (not overwritten) and listed in the output so you
-can review it. Run it once as a manual migration step, similar to `migrate_org.py`.
+modified, attachments are **copied** (flattened into `images/`, dropping the ID-based
+subdirectories) into the new layout, and any month that already exists at the
+destination is skipped (not overwritten) and listed in the output so you can review it.
+Run it once as a manual migration step, similar to `migrate_org.py`.
 
 ## Testing
 

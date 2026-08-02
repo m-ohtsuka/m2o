@@ -128,11 +128,13 @@ def main():
         # レイアウトモードに応じた出力先の解決
         if config.org_layout == "monthly":
             org_path, attach_dir = monthly_paths(config.org_directory, created_at.astimezone())
+            attach_property_dir = "images/"
         else:
             org_path, attach_dir = config.org_file_path, config.attach_dir
+            attach_property_dir = None
 
         # Orgファイルへ追加＆画像処理
-        writer = OrgWriter(org_path, attach_dir)
+        writer = OrgWriter(org_path, attach_dir, attach_property_dir=attach_property_dir)
         writer.add_toot(
             toot_id=toot_id,
             created_at=created_at,

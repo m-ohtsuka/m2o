@@ -221,6 +221,58 @@ description: "Task list template for feature implementation"
 
 ---
 
+## Phase 7: 実装後の修正 — Emacs実機検証による添付ディレクトリ方式の変更
+
+**Purpose**: T001〜T020完了後、実際にEmacs（Doom Emacs）上で月別レイアウトの画像添付を
+検証した結果、`[[attachment:filename]]` リンクのインライン画像表示がEmacsのグローバル変数
+`org-attach-id-dir` に依存しており、月別レイアウトでは解決に失敗することが判明した。
+spec.md（FR-009, FR-011）・research.md（§6）を参照。対応は**月別レイアウトのみ**が対象で、
+単一ファイルモードの保存形式・リンク形式は変更していない。
+
+このフェーズのタスクは事後的に記録したもので、すべて実施・検証済み。
+
+- [X] T021 `src/org_writer.py` の `OrgWriter.__init__` に任意引数 `attach_property_dir`
+      を追加し、`add_toot()` を、指定時は `#+PROPERTY: ATTACH_DIR {attach_property_dir}`
+      をファイル先頭に（未挿入なら）自動挿入した上でID分割なしのフラット保存、未指定
+      （デフォルト）時は従来通りID分割ディレクトリ保存、を行うよう分岐させる
+      (`src/org_writer.py`)
+- [X] T022 `src/org_writer.py` の `monthly_paths()` が返す添付ディレクトリ名を `.attach`
+      から `images` に変更する (`src/org_writer.py`)
+- [X] T023 `m2o.py` の同期ループで、`ORG_LAYOUT=monthly` のときのみ
+      `OrgWriter(org_path, attach_dir, attach_property_dir="images/")` を渡すよう変更する
+      (`m2o.py`)
+- [X] T024 `convert_to_monthly.py` の添付ファイルコピー処理を、変換先が
+      `images/{filename}`（ID分割なしのフラット構成）になるよう変更し、生成する各月別
+      ファイルの先頭に `#+PROPERTY: ATTACH_DIR images/` を挿入する（変換元の読み取りは
+      ID分割構成のまま変更しない） (`convert_to_monthly.py`)
+- [X] T025 [P] `tests/test_org_writer.py` を更新する: 画像添付テストをデフォルト挙動
+      （`attachment:` + ID分割、`ATTACH_DIR`プロパティなし）に戻し、`attach_property_dir`
+      指定時の新テスト（ATTACH_DIRプロパティ挿入・フラット保存・重複挿入なし）を追加、
+      `monthly_paths()` のテストを `images` ディレクトリ名に更新する
+      (`tests/test_org_writer.py`)
+- [X] T026 [P] `tests/test_convert_to_monthly.py` を更新する: 変換先の添付ファイル・
+      ATTACH_DIRプロパティ挿入に関するアサーションを新方式に合わせる
+      (`tests/test_convert_to_monthly.py`)
+- [X] T027 [P] `tests/test_monthly_layout.py` に、monthlyレイアウトでの画像添付tootの
+      end-to-endテスト（`m2o.main()` 経由でATTACH_DIRプロパティ・フラット保存を検証）を
+      追加する (`tests/test_monthly_layout.py`)
+- [X] T028 [P] `README.md` / `README-ja.md` / `CLAUDE.md` の画像添付・月別レイアウトに
+      関する記述を新方式（`images/` フラット構成、`ATTACH_DIR`プロパティ）に更新し、
+      CLAUDE.mdの実装履歴ログに本修正の経緯を追記する
+      (`README.md`, `README-ja.md`, `CLAUDE.md`)
+- [X] T029 [P] `spec.md`（FR-009, FR-011, Clarifications）・`research.md`（§6追加）・
+      `data-model.md`・`contracts/env-config.md`・`contracts/convert-to-monthly-cli.md`・
+      `quickstart.md` を新方式に合わせて更新する
+      (`specs/001-monthly-org-layout/`)
+- [X] T030 リポジトリ全体で `.venv/bin/python -m pytest` を実行し、全32テストがパスする
+      ことを確認する。加えてモック環境での手動end-to-end検証（`m2o.main()`実行）で、
+      実際に生成される `.org` ファイルと `images/` ディレクトリの内容を目視確認する
+
+**Checkpoint**: 月別レイアウトの画像添付が、Emacs側のグローバル設定に依存せず解決できる
+状態になっている。単一ファイルモードは無変更。
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

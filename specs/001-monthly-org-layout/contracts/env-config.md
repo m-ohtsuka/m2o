@@ -22,7 +22,7 @@
 | 必須/任意 | `ORG_LAYOUT=monthly` のとき必須。`ORG_LAYOUT=single`（既定）のときは無視される |
 | 値 | `<Org Directory>` の絶対パスまたは相対パス（相対パスは実行時に絶対パスへ解決） |
 | 導出パス | tootの保存先: `ORG_DIRECTORY/mastodon/{YYYY}/{MM}.org` |
-| 導出パス | 添付ファイル保存先: `ORG_DIRECTORY/mastodon/{YYYY}/.attach/` |
+| 導出パス | 添付ファイル保存先: `ORG_DIRECTORY/mastodon/{YYYY}/images/`（ID分割なしのフラット構成。各月別ファイル先頭に `#+PROPERTY: ATTACH_DIR images/` を自動挿入する） |
 | 不正値（`ORG_LAYOUT=monthly` かつ未設定） | 起動時に `Configuration error` として中断する |
 
 ## `ORG_FILE_PATH` の必須条件の変更

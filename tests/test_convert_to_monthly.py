@@ -56,9 +56,13 @@ def test_convert_creates_monthly_files_with_matching_content(tmp_path):
     assert jan_path.exists()
     assert feb_path.exists()
 
-    assert "Last toot of 2025." in dec_path.read_text(encoding="utf-8")
+    dec_content = dec_path.read_text(encoding="utf-8")
+    assert "Last toot of 2025." in dec_content
+    # 各月ファイルの先頭にATTACH_DIRプロパティが挿入されている
+    assert dec_content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
 
     jan_content = jan_path.read_text(encoding="utf-8")
+    assert jan_content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
     assert "Hello from January." in jan_content
     assert "Photo toot in January." in jan_content
 
@@ -95,15 +99,8 @@ def test_convert_copies_attachments_and_preserves_source(tmp_path):
     result = _run_converter(source_org, org_directory)
     assert result.returncode == 0, result.stderr
 
-    copied_path = (
-        org_directory
-        / "mastodon"
-        / "2026"
-        / ".attach"
-        / "aa"
-        / "bbccdd-1111-2222-3333-444455556666"
-        / "toot_1001_1.jpg"
-    )
+    # 変換先はID分割なしでimages/直下にフラットに保存される
+    copied_path = org_directory / "mastodon" / "2026" / "images" / "toot_1001_1.jpg"
     assert copied_path.exists()
     assert copied_path.read_bytes() == source_attach_bytes_before
 

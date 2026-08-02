@@ -80,14 +80,14 @@ def monthly_paths(org_directory: Path, local_dt: datetime.datetime) -> tuple[Pat
     """
     月別レイアウトにおける、tootのローカル日時に対応する出力先パスを算出する。
     - Orgファイル: org_directory/mastodon/{YYYY}/{MM}.org
-    - 添付ファイルディレクトリ: org_directory/mastodon/{YYYY}/.attach
+    - 添付ファイルディレクトリ: org_directory/mastodon/{YYYY}/images
     """
     org_directory = Path(org_directory)
     year_str = local_dt.strftime('%Y')
     month_str = local_dt.strftime('%m')
     year_dir = org_directory / "mastodon" / year_str
     org_path = year_dir / f"{month_str}.org"
-    attach_dir = year_dir / ".attach"
+    attach_dir = year_dir / "images"
     return org_path, attach_dir
 
 def insert_sorted(parent_node, new_node):
@@ -103,9 +103,18 @@ def insert_sorted(parent_node, new_node):
     parent_node.children.insert(insert_idx, new_node)
 
 class OrgWriter:
-    def __init__(self, org_file_path: Path, attach_dir: Path):
+    def __init__(self, org_file_path: Path, attach_dir: Path, attach_property_dir: str | None = None):
+        """
+        attach_property_dir: 指定した場合、Orgファイル先頭に
+        `#+PROPERTY: ATTACH_DIR {attach_property_dir}` を自動挿入し、添付画像を
+        ID分割ディレクトリなしで attach_dir 直下にフラット保存する（org-attachの
+        ATTACH_DIRプロパティが明示されている場合、Emacsはこれを使ってフラットに
+        解決するため）。未指定（デフォルト）の場合は従来通り、ID分割ディレクトリ
+        （.attach/{id[:2]}/{id[2:]}/）に保存し、ATTACH_DIRプロパティは挿入しない。
+        """
         self.org_file_path = Path(org_file_path).resolve()
         self.attach_dir = Path(attach_dir).resolve()
+        self.attach_property_dir = attach_property_dir
 
     def add_toot(self, toot_id: str, created_at, content_text: str, media_attachments):
         """
@@ -124,6 +133,17 @@ class OrgWriter:
             lines = []
 
         root = parse_org(lines)
+
+        # attach_property_dir 指定時は、ファイル先頭に ATTACH_DIR プロパティを
+        # （なければ）挿入する。org-attachはこれを見つけると、ID分割なしで
+        # このディレクトリ直下を添付先として使う。
+        if self.attach_property_dir is not None:
+            has_property = any(
+                line.strip().startswith("#+PROPERTY: ATTACH_DIR")
+                for line in root.content_lines
+            )
+            if not has_property:
+                root.content_lines.insert(0, f"#+PROPERTY: ATTACH_DIR {self.attach_property_dir}\n")
 
         # タイムゾーン考慮の上でローカル時刻に変換
         local_dt = created_at.astimezone()
@@ -189,10 +209,14 @@ class OrgWriter:
             content_lines.append(f":ID:       {entry_id}\n")
             content_lines.append(":END:\n")
 
-            # 保存先ディレクトリ: .attach/XX/XXXX...
-            id_prefix = entry_id[:2]
-            id_suffix = entry_id[2:]
-            dest_dir = self.attach_dir / id_prefix / id_suffix
+            if self.attach_property_dir is not None:
+                # ATTACH_DIRプロパティ使用時: ID分割せずフラットに保存
+                dest_dir = self.attach_dir
+            else:
+                # 従来通り: .attach/XX/XXXX... のID分割ディレクトリに保存
+                id_prefix = entry_id[:2]
+                id_suffix = entry_id[2:]
+                dest_dir = self.attach_dir / id_prefix / id_suffix
             dest_dir.mkdir(parents=True, exist_ok=True)
 
             for i, media in enumerate(images, 1):

@@ -32,9 +32,12 @@ pip install -r requirements.txt
    - ファイル内が既存の単一ファイルと同じ見出し階層
      （`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` → `**** [YYYY-MM-DD 曜 HH:MM]`）に
      なっている（FR-010）。
+   - ファイル先頭に `#+PROPERTY: ATTACH_DIR images/` が自動挿入されている。
    - 画像添付があるtootについては
-     `/path/to/org/mastodon/<今年>/.attach/` にファイルが保存され、Orgファイル内の
-     `[[attachment:...]]` リンクをEmacsで開くと画像が表示される。
+     `/path/to/org/mastodon/<今年>/images/` にファイルがID分割なしのフラット構成で
+     保存され、Orgファイル内の `[[attachment:...]]` リンクをEmacsで開くと画像が
+     表示される（インライン画像表示も、Emacs側の`org-attach-id-dir`設定に関わらず
+     解決できる）。
 
 4. 再度同期を実行し、**期待結果**: 重複するtoot見出しが増えないこと（FR-003, SC-001）。
 

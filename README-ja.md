@@ -72,10 +72,12 @@ ORG_DIRECTORY=/absolute/path/to/your/org
 ```
 
 これにより、tootは `ORG_DIRECTORY/mastodon/YYYY/MM.org`（例:
-`ORG_DIRECTORY/mastodon/2026/08.org`）に保存され、添付ファイルは
-`ORG_DIRECTORY/mastodon/YYYY/.attach/` 配下に保存されます。各月別ファイルは、単一ファイル
-レイアウトと同じ見出し階層（`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` →
-`**** [YYYY-MM-DD 曜 HH:MM]`）を維持します。
+`ORG_DIRECTORY/mastodon/2026/08.org`）に保存され、添付ファイルはID分割なしで
+`ORG_DIRECTORY/mastodon/YYYY/images/` 配下にフラットに保存されます。各月別ファイルは、
+単一ファイルレイアウトと同じ見出し階層（`* YYYY` → `** YYYY-MM` → `*** YYYY-MM-DD` →
+`**** [YYYY-MM-DD 曜 HH:MM]`）を維持しつつ、ファイル先頭に
+`#+PROPERTY: ATTACH_DIR images/` を自動挿入します。これにより、Emacs側のグローバルな
+`org-attach-id-dir` 設定に関わらず、Orgファイル自身の場所から添付が解決できます。
 
 #### 既存の `mastodon.org` を変換する
 
@@ -87,9 +89,10 @@ ORG_DIRECTORY=/absolute/path/to/your/org
 ```
 
 この変換は非破壊的です。変換元の `mastodon.org` と `.attach` 配下のファイルは変更されず、
-添付ファイルは新しい場所へ**コピー**されます。また、変換先に既に存在する月はスキップされ
-（上書きされません）、実行結果としてスキップした月の一覧が表示されるので確認できます。
-`migrate_org.py` と同様、一度だけ手動で実行する移行スクリプトです。
+添付ファイルは新しい場所へ**コピー**されます（`images/` 配下へID分割なしのフラット構成で
+コピーされます）。また、変換先に既に存在する月はスキップされ（上書きされません）、
+実行結果としてスキップした月の一覧が表示されるので確認できます。`migrate_org.py` と同様、
+一度だけ手動で実行する移行スクリプトです。
 
 ## テストの実行
 

@@ -163,15 +163,65 @@ def test_org_writer_add_toot_with_images(tmp_path):
     assert ":PROPERTIES:" in content
     assert ":ID:" in content
     assert "[[attachment:toot_11113_1.jpg]]" in content
-    
+    assert "#+PROPERTY: ATTACH_DIR" not in content
+
     # UUIDプロパティを抽出
     m = re.search(r':ID:\s+([a-f0-9\-]+)', content)
     assert m is not None
     entry_id = m.group(1)
-    
+
     img_path = attach_dir / entry_id[:2] / entry_id[2:] / "toot_11113_1.jpg"
     assert img_path.exists()
     assert img_path.read_bytes() == b"fake_image_data"
+
+
+def test_org_writer_add_toot_with_images_using_attach_property_dir(tmp_path):
+    """attach_property_dir 指定時は、ATTACH_DIRプロパティを挿入し、
+    画像をID分割なしでフラットに保存する（monthlyレイアウト用）。"""
+    from unittest.mock import MagicMock, patch
+
+    org_file = tmp_path / "08.org"
+    attach_dir = tmp_path / "images"
+
+    writer = OrgWriter(org_file, attach_dir, attach_property_dir="images/")
+    tz_jst = datetime.timezone(datetime.timedelta(hours=9))
+    dt = datetime.datetime(2026, 8, 2, 17, 4, tzinfo=tz_jst)
+
+    media_attachments = [
+        {
+            'type': 'image',
+            'url': 'https://example.com/media/test_image.jpg',
+            'remote_url': 'https://example.com/media/test_image.jpg'
+        }
+    ]
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.iter_content = lambda chunk_size: [b"fake_image_data"]
+
+    with patch('requests.get', return_value=mock_response):
+        writer.add_toot("11113", dt, "Toot with image content", media_attachments)
+
+    content = org_file.read_text(encoding='utf-8')
+
+    # ファイル先頭にATTACH_DIRプロパティが1回だけ挿入されている
+    assert content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
+    assert content.count("#+PROPERTY: ATTACH_DIR") == 1
+
+    assert ":PROPERTIES:" in content
+    assert ":ID:" in content
+    assert "[[attachment:toot_11113_1.jpg]]" in content
+
+    # ID分割なしでフラットに保存されている
+    img_path = attach_dir / "toot_11113_1.jpg"
+    assert img_path.exists()
+    assert img_path.read_bytes() == b"fake_image_data"
+
+    # 2件目のtoot（画像なし）を追加してもATTACH_DIRプロパティが重複しないこと
+    dt2 = dt + datetime.timedelta(minutes=1)
+    writer.add_toot("11114", dt2, "Second toot without image", [])
+    content2 = org_file.read_text(encoding='utf-8')
+    assert content2.count("#+PROPERTY: ATTACH_DIR") == 1
 
 
 def test_monthly_paths(tmp_path):
@@ -181,7 +231,7 @@ def test_monthly_paths(tmp_path):
     dt = datetime.datetime(2026, 8, 2, 17, 4, tzinfo=tz_jst)
     org_path, attach_dir = monthly_paths(org_directory, dt)
     assert org_path == org_directory / "mastodon" / "2026" / "08.org"
-    assert attach_dir == org_directory / "mastodon" / "2026" / ".attach"
+    assert attach_dir == org_directory / "mastodon" / "2026" / "images"
 
 
 def test_monthly_paths_pads_single_digit_month(tmp_path):
@@ -191,7 +241,7 @@ def test_monthly_paths_pads_single_digit_month(tmp_path):
     dt = datetime.datetime(2026, 1, 5, 9, 0, tzinfo=tz_jst)
     org_path, attach_dir = monthly_paths(org_directory, dt)
     assert org_path == org_directory / "mastodon" / "2026" / "01.org"
-    assert attach_dir == org_directory / "mastodon" / "2026" / ".attach"
+    assert attach_dir == org_directory / "mastodon" / "2026" / "images"
 
 
 def test_monthly_paths_different_years(tmp_path):
@@ -206,7 +256,7 @@ def test_monthly_paths_different_years(tmp_path):
 
     assert org_path_2025 == org_directory / "mastodon" / "2025" / "12.org"
     assert org_path_2026 == org_directory / "mastodon" / "2026" / "01.org"
-    assert attach_dir_2025 == org_directory / "mastodon" / "2025" / ".attach"
-    assert attach_dir_2026 == org_directory / "mastodon" / "2026" / ".attach"
+    assert attach_dir_2025 == org_directory / "mastodon" / "2025" / "images"
+    assert attach_dir_2026 == org_directory / "mastodon" / "2026" / "images"
 
 
