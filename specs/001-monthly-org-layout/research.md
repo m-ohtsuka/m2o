@@ -120,7 +120,10 @@ spec.mdの `Assumptions` で「Plan フェーズで決定する」とされて�
 から、「`images/` 直下へのID分割なしのフラット構成 ＋ 各月別ファイル先頭への
 `#+PROPERTY: ATTACH_DIR images/` 自動挿入」に変更した。この変更は**月別レイアウトのみ**
 が対象で、単一ファイルモードの保存形式（`.attach/`のID分割構成、`attachment:`リンク、
-`ATTACH_DIR`プロパティなし）は一切変更しない。
+`ATTACH_DIR`プロパティなし）は一切変更しない。あわせて、月別レイアウトはID分割を
+行わずファイル名（`toot_{toot_id}_{index}.{ext}`）の一意性のみでパスが一意に定まる
+ため、パス解決用のUUID生成・`:PROPERTIES: :ID: :END:` ドロワーの挿入自体も
+月別レイアウトでは行わない（単一ファイルモードは引き続き挿入する）。
 
 **Rationale**: 実機（Doom Emacs）検証の結果、`[[attachment:filename]]` リンクの
 インライン画像表示は、Emacsのグローバル変数 `org-attach-id-dir`

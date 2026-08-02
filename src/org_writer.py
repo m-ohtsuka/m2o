@@ -201,19 +201,18 @@ class OrgWriter:
         # 画像ファイルの抽出・ダウンロード
         images = [m for m in media_attachments if m.get('type') == 'image']
         if images:
-            # org-attach 規約用の UUID の生成
-            entry_id = str(uuid.uuid4())
-            
-            # PROPERTIESセクションの追加
-            content_lines.append(":PROPERTIES:\n")
-            content_lines.append(f":ID:       {entry_id}\n")
-            content_lines.append(":END:\n")
-
             if self.attach_property_dir is not None:
-                # ATTACH_DIRプロパティ使用時: ID分割せずフラットに保存
+                # ATTACH_DIRプロパティ使用時: ID分割せずフラットに保存するため、
+                # パス解決用のUUID（:PROPERTIES: :ID:）は不要
                 dest_dir = self.attach_dir
             else:
-                # 従来通り: .attach/XX/XXXX... のID分割ディレクトリに保存
+                # 従来通り: org-attach規約用のUUIDを生成し、:PROPERTIES:セクションを
+                # 追加した上で .attach/XX/XXXX... のID分割ディレクトリに保存する
+                entry_id = str(uuid.uuid4())
+                content_lines.append(":PROPERTIES:\n")
+                content_lines.append(f":ID:       {entry_id}\n")
+                content_lines.append(":END:\n")
+
                 id_prefix = entry_id[:2]
                 id_suffix = entry_id[2:]
                 dest_dir = self.attach_dir / id_prefix / id_suffix

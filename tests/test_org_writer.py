@@ -208,8 +208,10 @@ def test_org_writer_add_toot_with_images_using_attach_property_dir(tmp_path):
     assert content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
     assert content.count("#+PROPERTY: ATTACH_DIR") == 1
 
-    assert ":PROPERTIES:" in content
-    assert ":ID:" in content
+    # ATTACH_DIRプロパティ使用時はパス解決にIDを使わないため、
+    # :PROPERTIES: / :ID: ドロワーは不要（挿入しない）
+    assert ":PROPERTIES:" not in content
+    assert ":ID:" not in content
     assert "[[attachment:toot_11113_1.jpg]]" in content
 
     # ID分割なしでフラットに保存されている

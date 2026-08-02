@@ -158,8 +158,10 @@ def test_monthly_layout_image_toot_uses_attach_dir_property_and_flat_storage(tmp
     content = org_path.read_text(encoding='utf-8')
 
     assert content.startswith("#+PROPERTY: ATTACH_DIR images/\n")
-    assert ":PROPERTIES:" in content
-    assert ":ID:" in content
+    # ATTACH_DIRプロパティ使用時はパス解決にIDを使わないため、
+    # :PROPERTIES: / :ID: ドロワーは不要（挿入しない）
+    assert ":PROPERTIES:" not in content
+    assert ":ID:" not in content
     assert "[[attachment:toot_100_1.jpg]]" in content
 
     # ID分割なしで images/ 直下にフラット保存されている

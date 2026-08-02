@@ -267,6 +267,12 @@ spec.md（FR-009, FR-011）・research.md（§6）を参照。対応は**月別�
 - [X] T030 リポジトリ全体で `.venv/bin/python -m pytest` を実行し、全32テストがパスする
       ことを確認する。加えてモック環境での手動end-to-end検証（`m2o.main()`実行）で、
       実際に生成される `.org` ファイルと `images/` ディレクトリの内容を目視確認する
+- [X] T031 月別レイアウト（`attach_property_dir`指定時）はID分割を行わずファイル名の
+      一意性のみでパスが定まるため不要になった `:PROPERTIES: :ID: :END:` ドロワーの
+      挿入を、`src/org_writer.py` の `add_toot()` から取り除く（単一ファイルモードは
+      変更なし）。関連テスト（`tests/test_org_writer.py`,
+      `tests/test_monthly_layout.py`）とCLAUDE.md/research.mdの記述を更新する
+      (`src/org_writer.py`, `tests/test_org_writer.py`, `tests/test_monthly_layout.py`)
 
 **Checkpoint**: 月別レイアウトの画像添付が、Emacs側のグローバル設定に依存せず解決できる
 状態になっている。単一ファイルモードは無変更。
